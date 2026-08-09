@@ -57,7 +57,7 @@ three before continuing.
 
 ```bash
 mkdir pulse-hypr-test-app && cd pulse-hypr-test-app
-git clone git@github.com:<owner>/pulse-hypr-app-be.git .
+git clone git@github.com:aahadaazar/pulse-hypr-app-be.git .
 git clone git@github.com:IffatAhmedk/pulse-hypr-test-app.git flutter
 git clone https://github.com/HBandSDK/Android_Ble_SDK.git    # reference, optional
 ```
