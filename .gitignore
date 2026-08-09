@@ -4,6 +4,21 @@
 
 node_modules/
 .wrangler/
-.dev.vars
 *.log
 .DS_Store
+
+# Secrets guardrail — see docs/SETUP-AND-WIRING.md Step 2.7.
+# Encrypted dotenvx files are the exception: they hold no plaintext secrets.
+.env.keys
+*serviceAccount*.json
+*service-account*.json
+*.jks
+*.keystore
+key.properties
+.dev.vars
+.env
+.env.*
+!.env.example
+!.env.dev
+!.env.staging
+!.env.production

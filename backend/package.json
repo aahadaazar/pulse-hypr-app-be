@@ -5,7 +5,8 @@
   "description": "Pulse Hypr metrics ingest and reporting API. Hono on Cloudflare Workers, Firestore storage.",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "secrets": "sh scripts/dev-vars.sh",
+    "dev": "npm run secrets && wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",
+    "@dotenvx/dotenvx": "^2.20.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "wrangler": "^3.99.0"
