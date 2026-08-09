@@ -433,7 +433,11 @@ curl -X POST "$API/v1/ingest" -H "Authorization: Bearer $TOKEN" \
 # → 201, inserted: 2
 
 # send it again, verbatim
-# → 200, duplicate: true, inserted: 0     ← idempotency proven
+# → 200, duplicate: true                  ← idempotency proven
+#   (inserted/accepted mirror the ORIGINAL call's counts, replayed verbatim
+#   from the stored receipt -- they do not reset to 0. `duplicate: true` is
+#   what confirms no second write happened; see src/domain/ingest.ts, the
+#   receipt-hit path returns before touching storage at all.)
 
 curl "$API/v1/metrics/latest" -H "Authorization: Bearer $TOKEN"
 ```

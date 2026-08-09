@@ -38,8 +38,8 @@ MAX_SAMPLES_PER_BATCH = "20000"
 # isolates. Both are shared, non-user data; nothing user-scoped is stored here.
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_PREVIEW_ID"
+id = "edd83a5404f54c75a999720f2f7ce5a2"
+preview_id = "83b1cf7604fd482ba5bbe0771a4c5da2"
 
 # Retention sweep. 03:20 UTC daily -- off the top of the hour to avoid the
 # platform-wide cron thundering herd.
