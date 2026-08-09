@@ -662,6 +662,7 @@ add work so much as give that work somewhere to land.
 | Question | Document |
 |---|---|
 | How do I set all of this up? | [`SETUP-AND-WIRING.md`](SETUP-AND-WIRING.md) |
+| I'm a new collaborator, where do I start? | [`ONBOARDING.md`](ONBOARDING.md) |
 | What should I build, in what order? | [`PHASES.md`](PHASES.md) |
 | Why is the storage shaped like this? | [`backend/docs/05-DECISIONS.md`](../backend/docs/05-DECISIONS.md) |
 | What exactly does an endpoint return? | [`backend/docs/03-API.md`](../backend/docs/03-API.md) |

@@ -515,6 +515,54 @@ collide in one Firestore namespace.
 
 ---
 
+## ADR-021 — Collaborators share the owner's project; they don't mint their own
+
+**Status:** Accepted · **Decided by:** project owner · 2026-08-09
+
+**Context.** [`SETUP-AND-WIRING.md §2.2`](../../docs/SETUP-AND-WIRING.md) originally
+proposed a three-tier credential model — each developer mints their own free
+Firebase project and Cloudflare account for local dev, with only a shared
+staging project and the real production project held centrally. That model
+was written during initial architecture design and was never actually built:
+Phase 0 provisioning (this session) stood up exactly one Firebase project
+(`hypr-8064c`) and one Cloudflare Worker, and the owner then stated the actual
+intent directly — collaborators should use the owner's real project and be
+able to see everything running on it, not work against an isolated sandbox
+that can silently drift from production behaviour.
+
+**Decision.** One Firebase project, one Cloudflare account, one deployed
+Worker. Collaborators are added as project members — **Editor** on Firebase,
+a scoped Workers-edit role on Cloudflare — and receive `DOTENV_PRIVATE_KEY_DEV`
+to decrypt `.env.dev` for local runtime secrets. `DOTENV_PRIVATE_KEY_PRODUCTION`,
+the Android release keystore, and Owner/IAM-level access on both platforms
+stay with the project owner only. See
+[`ONBOARDING.md`](../../docs/ONBOARDING.md) for the invite runbook.
+
+**Rejected alternative: per-developer dev projects (the original §2.2
+design).** Better isolation — a collaborator's mistakes in a scratch project
+can't touch real data — but it means the person testing the app is never
+looking at the same Firestore data or Worker logs the owner sees, which
+defeats the actual goal here (a collaborator who can see the real system).
+For a small trusted team this is judged not worth the drift risk; revisit if
+the team grows past the point where "everyone can see everything" is still
+an acceptable security posture.
+
+**Consequences.**
+- Revocation is a console removal (Firebase project member, Cloudflare
+  account member) plus a `DOTENV_PRIVATE_KEY_DEV` rotation, not an account
+  deletion — a leaving collaborator's access is removed, not their own
+  infrastructure torn down.
+- `.env.dev` and `.env.production` currently decrypt to the identical
+  service-account credential, since only one Firebase project exists. The
+  two-file dotenvx split still matters as a revocation boundary between "can
+  run the backend locally" and "can redeploy the production secret," even
+  though today they point at the same underlying key.
+- Firebase **Editor** (not Owner) and a scoped Cloudflare role were chosen
+  deliberately over full ownership-equivalent access: full visibility into
+  data, logs and deploys, without also handing out billing or IAM control.
+
+---
+
 ## Open questions
 
 Not decisions — things deliberately left to be settled with more information.

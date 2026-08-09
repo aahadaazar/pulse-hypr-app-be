@@ -38,26 +38,46 @@ from those sources.
 
 ## Phase 0 — Foundation
 
-**Status:** Not started
+**Status:** In progress — 0.1–0.3 done; 0.4 waiting on a specific collaborator
+to onboard, TTL policy waiting on Blaze billing (see Notes).
 **Goal:** Make the project shareable and give the app a backend to talk to.
 **Entry criteria:** None — this is where everything starts.
 
 ### Tasks
 
-Full detail lives in [`SETUP-AND-WIRING.md`](SETUP-AND-WIRING.md) Steps 1–4;
-this phase does not duplicate it.
+Full detail lives in [`SETUP-AND-WIRING.md`](SETUP-AND-WIRING.md) Steps 1–3
+and [`ONBOARDING.md`](ONBOARDING.md); this phase does not duplicate them.
 
-| # | Task | Where |
-|---|---|---|
-| 0.1 | Root repo created, `backend/` and `docs/` pushed | [Step 1](SETUP-AND-WIRING.md#step-1--put-the-backend-under-version-control) |
-| 0.2 | Secrets encrypted with dotenvx, collaborator has the dev key | [Step 2](SETUP-AND-WIRING.md#step-2--credentials-without-emailing-env-files) |
-| 0.3 | Firebase + Cloudflare provisioned, Worker deployed | [Step 3](SETUP-AND-WIRING.md#step-3--provision-the-backend) |
-| 0.4 | Collaborator's Flutter toolchain running, SHA-1 registered | [Step 4](SETUP-AND-WIRING.md#step-4--per-developer-flutter-environment) |
+| # | Task | Where | Status |
+|---|---|---|---|
+| 0.1 | Root repo created, `backend/` and `docs/` pushed | [Step 1](SETUP-AND-WIRING.md#step-1--put-the-backend-under-version-control) | Done |
+| 0.2 | Secrets encrypted with dotenvx | [Step 2](SETUP-AND-WIRING.md#step-2--credentials-without-emailing-env-files) | Done |
+| 0.3 | Firebase + Cloudflare provisioned, Worker deployed | [Step 3](SETUP-AND-WIRING.md#step-3--provision-the-backend) | Done except TTL policy (blocked on Blaze billing) |
+| 0.4 | Collaborator has console access, Flutter toolchain running, SHA-1 registered | [`ONBOARDING.md`](ONBOARDING.md) | Not started — no collaborator identified yet |
+
+### Notes
+
+**Credential model changed mid-phase** — collaborators now get Editor/member
+access on the owner's real Firebase and Cloudflare projects instead of
+minting their own dev-tier project, per
+[ADR-021](../backend/docs/05-DECISIONS.md#adr-021--collaborators-share-the-owners-project-they-dont-mint-their-own).
+`ONBOARDING.md` reflects this; it replaces what was originally planned as
+inline "Collaborator onboarding" content in `SETUP-AND-WIRING.md`.
+
+**The Firestore TTL policy on `receipts` is blocked**, not skipped: setting
+it (via console or `gcloud firestore fields ttls update`) fails with
+`PERMISSION_DENIED: Project hypr-8064c has billing disabled`, confirmed via
+`gcloud` even though the account holds Owner-level IAM — this is a
+billing-plan gate, not a permissions issue. Needs Blaze (pay-as-you-go)
+enabled on `hypr-8064c` before this task can close. Everything else in 0.3
+does not depend on it.
 
 ### Exit criteria
 
 - The smoke test in Step 3.3 passes, **including the duplicate-batch
-  assertion** (`duplicate: true`, `inserted: 0` on replay).
+  assertion** (`duplicate: true` on replay — `inserted`/`accepted` mirror the
+  original call's stored receipt rather than resetting to 0; see `ingest.ts`).
+- Firestore TTL policy on `receipts`/`expiresAt` is active.
 - Collaborator has cloned both repos, has a working dev build signed in on a
   device, and has decrypted a working `.dev.vars`.
 

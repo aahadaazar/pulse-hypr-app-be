@@ -15,6 +15,11 @@ explains what connects to what and why. For *what to build and in what
 order* once this setup is done, see [`PHASES.md`](PHASES.md) — this document
 only gets you to a working, shareable, deployed foundation.
 
+**This document is written for the project owner.** If you're a collaborator
+being added to an already-running project, you want
+[`ONBOARDING.md`](ONBOARDING.md) instead — it's the same underlying steps,
+written as a runbook for you specifically.
+
 ---
 
 ## 0. Where things actually stand
@@ -110,29 +115,40 @@ Most of what _looks_ like a credential in this project is not one.
 
 So the genuinely-secret set is **three items**, not a folder of `.env` files.
 
-### 2.2 The principle: don't share credentials, mint your own
+### 2.2 The principle: one shared project, scoped access
 
-The best answer to "how do I transfer my env to my friend" is usually **don't**.
-Three tiers:
+**Decided by: project owner · 2026-08-09.** Collaborators work against the
+owner's real project — one Firebase project (`hypr-8064c`), one Cloudflare
+account, one deployed Worker — rather than each minting their own free-tier
+copy. The goal is visibility: everyone can see real data and real deploys,
+not a synthetic sandbox that drifts from what's actually running. This
+replaces an earlier "everyone mints their own dev project" design that was
+never actually built — see [`05-DECISIONS.md`](../backend/docs/05-DECISIONS.md)
+if that tier language shows up elsewhere.
 
-| Tier        | Who            | Credentials                                        | Sharing                                                                 |
-| ----------- | -------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Dev**     | Each developer | Own Firebase project + own free Cloudflare account | **None.** Everyone mints their own                                      |
-| **Staging** | Shared         | One Firebase project + one Worker                  | `.env.staging` committed encrypted; its private key shared              |
-| **Prod**    | Owner only     | Real project, release keystore                     | `.env.production` committed encrypted; its private key **never** shared |
+What each collaborator gets, and what stays owner-only:
 
-Two consequences worth internalising:
+| Grant                            | Collaborator gets                                    | Owner keeps                              |
+| --------------------------------- | ----------------------------------------------------- | ----------------------------------------- |
+| **Firebase console**              | Added as project member, **Editor** role               | Owner role (billing, IAM, project deletion) |
+| **Cloudflare account**            | Added as account member with Workers edit access      | Account owner (billing, API tokens)       |
+| **GitHub repos**                  | Write access, both repos                              | Admin                                     |
+| **Runtime secrets (`DOTENV_PRIVATE_KEY_DEV`)** | Shared — decrypts `.env.dev`, same credential the Worker itself runs on | — |
+| **Runtime secrets (`DOTENV_PRIVATE_KEY_PRODUCTION`)** | **Not shared**                            | Only key that can decrypt `.env.production` |
+| **Android release keystore**      | Not shared                                            | Only the owner signs a Play release       |
 
-1. **A collaborator doing Flutter work needs zero backend secrets.** Point the app
-   at your deployed _staging_ Worker and they never touch a service-account key.
-   Only someone editing backend code needs one — and then it should be theirs.
-2. **Cloudflare is itself a secret store for the deployed service.** Once
-   `wrangler secret put` has run, the value is encrypted at Cloudflare and never
-   needed locally again until rotation. Local secret handling covers only
-   bootstrapping, local development, and CI.
+Editor (not Owner) on Firebase and a scoped Workers role (not full account
+access) on Cloudflare are the actual asks here — full visibility into data,
+logs, and deploys, without handing out billing or IAM control. `.env.dev` and
+`.env.production` currently decrypt to the *same* service-account credential
+(there is only one Firebase project today), so the two-file split is not
+project isolation — it is a revocation boundary: a collaborator's key can be
+rotated out without touching the credential Cloudflare has stored for the
+live Worker.
 
-That reduces the problem from "sync all environment variables between two
-machines" to "send one private-key string, once."
+The step-by-step invite process and what a new collaborator does with this
+access is [`ONBOARDING.md`](ONBOARDING.md) — this section is the policy, that
+document is the runbook.
 
 ### 2.3 The tool: dotenvx
 
@@ -450,51 +466,13 @@ sync, so if that fails, everything downstream double-counts.
 
 ## Step 4 — Per-developer Flutter environment
 
-After [`LOCAL_SETUP_AND_RUN.md`](../flutter/LOCAL_SETUP_AND_RUN.md).
-
-### 4.1 The SHA-1 gotcha — read this before debugging sign-in
-
-Google Sign-In on Android validates the app's signing certificate. **Every
-developer's debug keystore has a different SHA-1**, so a second developer's
-`Sign in with Google` fails silently — usually as a cancelled-looking
-`GoogleSignInException` with no useful message — until their fingerprint is
-registered.
-
-```bash
-cd flutter/android
-./gradlew signingReport     # find the SHA1 under Variant: debug
-```
-
-Firebase console → Project settings → your Android app → **Add fingerprint** →
-paste the SHA-1. Then re-download `google-services.json` and **commit it** — the
-file gains an `oauth_client` entry per registered fingerprint, so both
-developers' hashes must be present in the committed copy.
-
-Do this once per developer per machine. It is the most common cause of "sign-in
-works for you but not for me."
-
-### 4.2 Keep the committed Firebase config as-is
-
-`google-services.json`, `GoogleService-Info.plist` and `firebase_options.dart`
-are tracked and should stay tracked. They are client identifiers that ship inside
-every APK, not secrets. Gitignoring them breaks the build for the other
-developer, which is a tempting mistake to make while tightening secret handling.
-
-If someone wants to develop against their own Firebase project, use a build
-flavor with a gitignored override rather than swapping the committed files.
-
-### 4.3 Hardware
-
-| Item                | Detail                                                   |
-| ------------------- | -------------------------------------------------------- |
-| Phone               | Pixel 8 Pro (the device the BLE fixes were validated on) |
-| Band                | Veepoo KR96 PRO, pairing password `0000`                 |
-| Band history window | 3 days (`watchDataDay`)                                  |
-
-⚠️ [`flutter/AGENTS.md`](../flutter/AGENTS.md) declares a **do-not-touch zone**
-around `BandConnectionManager.kt` and the `BluetoothService` manifest entry.
-Both developers must read it before touching Android BLE code — the constraints
-there encode a reproduced device bug, not a style preference.
+This is now [`ONBOARDING.md`](ONBOARDING.md) Steps 3–6 — the SHA-1
+registration gotcha, why the committed Firebase config files must stay
+tracked, and the hardware table (phone, band, pairing password, the
+`AGENTS.md` do-not-touch zone). Not duplicated here; that document is
+written to be handed to each new collaborator directly. §2.2 above covers
+*why* they get Firebase Editor access to do their own SHA-1 registration
+rather than routing it through you.
 
 ---
 
@@ -590,6 +568,8 @@ sent as `steps` samples instead of `counters`.
 
 - [ ] Root repo created, `backend/` and `docs/` pushed
 - [ ] Collaborator has write access to both repos
+- [ ] Collaborator added as Firebase project member, **Editor** role
+- [ ] Collaborator added as Cloudflare account member, Workers edit access
 - [ ] dotenvx installed; `.env.dev` / `.env.production` encrypted and committed
 - [ ] `.env.keys` gitignored; `dotenvx precommit` passes
 - [ ] `DOTENV_PRIVATE_KEY_DEV` sent to the collaborator; prod key kept private
@@ -601,14 +581,9 @@ sent as `steps` samples instead of `counters`.
 
 **Collaborator onboarding**
 
-- [ ] Both repos cloned side by side in one parent folder
-- [ ] Toolchain per `LOCAL_SETUP_AND_RUN.md`; `flutter doctor` clean
-- [ ] Debug SHA-1 registered in Firebase; refreshed `google-services.json` committed
-- [ ] App builds and signs in on a physical device
-- [ ] `DOTENV_PRIVATE_KEY_DEV` pasted into `backend/.env.keys`
-- [ ] `npm run secrets` produces a working `.dev.vars`; `dotenvx get FIREBASE_PRIVATE_KEY -f .env.dev` prints the whole key
-- [ ] `npm run typecheck && npm test` green in `backend/`
-- [ ] Read `AGENTS.md`, `findings.md`, and `docs/DATA-AND-APP-FLOW.md`
+This is now [`ONBOARDING.md`](ONBOARDING.md) — a self-contained runbook
+handed to each incoming collaborator, ending in its own "you're ready when"
+checklist. Not duplicated here.
 
 **Before enabling ingest against production data**
 
