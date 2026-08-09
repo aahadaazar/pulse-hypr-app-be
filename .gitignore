@@ -1,0 +1,9 @@
+# Independent repositories, cloned side by side — see docs/SETUP-AND-WIRING.md
+/flutter/
+/Android_Ble_SDK/
+
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store

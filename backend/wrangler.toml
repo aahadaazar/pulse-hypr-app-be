@@ -1,0 +1,53 @@
+name = "pulse-hypr-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+# ---------------------------------------------------------------------------
+# Non-secret configuration.
+#
+# FIREBASE_PROJECT_ID must match the project whose ID tokens the app sends.
+# The Flutter app currently reports `hypr-8064c` for Android and Dart
+# (flutter/lib/firebase_options.dart); the iOS block in flutter/firebase.json
+# still points at a second project (`pulse-hypr`). Those must be consolidated
+# before iOS clients can authenticate here -- see docs/07-OPERATIONS.md.
+# ---------------------------------------------------------------------------
+[vars]
+FIREBASE_PROJECT_ID = "hypr-8064c"
+ENVIRONMENT = "development"
+
+# Retention tiers, in days. See ADR-009 in docs/05-DECISIONS.md.
+#   raw    : 5-minute packed blocks   (users/{uid}/days/{date}/streams/{stream})
+#   hourly : 24-slot frames on the day document
+#   daily  : month documents -- never expired
+RETENTION_RAW_DAYS = "90"
+RETENTION_HOURLY_DAYS = "730"
+
+# Largest number of samples accepted in a single ingest request. Chosen so a
+# worst-case batch stays well inside the Workers request-size and CPU budget
+# while still letting a phone drain a multi-day backlog in a handful of calls.
+MAX_SAMPLES_PER_BATCH = "20000"
+
+# ---------------------------------------------------------------------------
+# Secrets (set with `wrangler secret put <NAME>`, never committed):
+#   FIREBASE_CLIENT_EMAIL   service-account email for Firestore REST access
+#   FIREBASE_PRIVATE_KEY    service-account PEM private key (PKCS#8)
+# ---------------------------------------------------------------------------
+
+# Caches the Google OAuth access token and the Firebase public JWK set across
+# isolates. Both are shared, non-user data; nothing user-scoped is stored here.
+[[kv_namespaces]]
+binding = "CACHE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_PREVIEW_ID"
+
+# Retention sweep. 03:20 UTC daily -- off the top of the hour to avoid the
+# platform-wide cron thundering herd.
+[triggers]
+crons = ["20 3 * * *"]
+
+[observability]
+enabled = true
+
+[env.production]
+vars = { FIREBASE_PROJECT_ID = "hypr-8064c", ENVIRONMENT = "production", RETENTION_RAW_DAYS = "90", RETENTION_HOURLY_DAYS = "730", MAX_SAMPLES_PER_BATCH = "20000" }

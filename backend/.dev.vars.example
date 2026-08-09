@@ -1,0 +1,10 @@
+# Copy to `.dev.vars` for local `wrangler dev`. Never commit `.dev.vars`.
+#
+# Both values come from a Firebase service-account key JSON
+# (Firebase console -> Project settings -> Service accounts -> Generate new private key).
+# The service account needs the "Cloud Datastore User" role.
+
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@hypr-8064c.iam.gserviceaccount.com"
+
+# Paste the PEM exactly as it appears in the JSON, including the literal \n escapes.
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEv...\n-----END PRIVATE KEY-----\n"
