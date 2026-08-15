@@ -87,7 +87,7 @@ only, not an enforced cap) was set alongside it as a tripwire. TTL is now
 
 ## Phase 1 — Core Android Reliability
 
-**Status:** Not started
+**Status:** Done
 **Goal:** Make on-device data trustworthy and durable before anything leaves
 the phone. Nothing downstream is worth building on top of a dashboard that
 still resets on every restart.
@@ -181,7 +181,7 @@ together also removes the `startedSignedIn` workaround in
 
 ## Phase 2 — Cloud Sync
 
-**Status:** Not started
+**Status:** In progress
 **Goal:** Data leaves the phone and survives reinstall — the actual reason
 this backend exists.
 **Entry criteria:** Phase 1 complete. Uploading before 1.3 lands writes wrong
@@ -302,6 +302,12 @@ BLE conditions — the gap between "works in the happy path" and "works on a
 commute."
 **Entry criteria:** Phase 2 complete. These tasks harden the sync pipeline
 Phase 2 builds; there's nothing to harden before it exists.
+
+**Implementation brief:** [`PHASE-4-RELIABILITY-AND-POLISH.md`](PHASE-4-RELIABILITY-AND-POLISH.md)
+is a self-contained handoff for whoever implements this phase — verified
+current-code state per task, the producer/consumer relationship between 4.1
+and 4.3, and a flag on a live discrepancy between `AGENTS.md` and the actual
+scan-path code that affects how 4.2 should be built.
 
 ### Tasks
 
