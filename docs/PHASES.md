@@ -181,7 +181,7 @@ together also removes the `startedSignedIn` workaround in
 
 ## Phase 2 — Cloud Sync
 
-**Status:** In progress
+**Status:** Done
 **Goal:** Data leaves the phone and survives reinstall — the actual reason
 this backend exists.
 **Entry criteria:** Phase 1 complete. Uploading before 1.3 lands writes wrong
