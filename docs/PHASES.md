@@ -296,7 +296,7 @@ they remain accurate for the mechanics of the parts that are still in scope
 
 ## Phase 4 — Reliability & Polish
 
-**Status:** Not started
+**Status:** In progress
 **Goal:** Make the daily experience trustworthy under real-world network and
 BLE conditions — the gap between "works in the happy path" and "works on a
 commute."
