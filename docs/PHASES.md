@@ -364,7 +364,7 @@ that already arrive in `OriginData3` on every history sync.
 
 ## Phase 6 — Web Dashboard
 
-**Status:** Not started
+**Status:** In progress
 **Goal:** Ship the frontend this backend was built for.
 **Entry criteria:** Phase 2 complete, minimum. Phase 4 strongly recommended —
 building the dashboard against an unhardened sync pipeline means the
