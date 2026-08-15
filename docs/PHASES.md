@@ -98,6 +98,13 @@ parallel with the rest of Phase 0. See
 [Step 6](SETUP-AND-WIRING.md#step-6--splitting-the-work) for how to split this
 across two developers.
 
+**Implementation brief:** [`PHASE-1-CORE-ANDROID-RELIABILITY.md`](PHASE-1-CORE-ANDROID-RELIABILITY.md)
+is a self-contained handoff for whoever implements this phase — verified
+current-code state per task, exact scope boundaries (what's already correct
+vs. what's actually broken), and a step-by-step checklist. It supersedes the
+notes below wherever the two disagree; it was written after re-reading the
+actual source, not just the original fix docs.
+
 ### Tasks
 
 | # | Task | Source | Tier |
