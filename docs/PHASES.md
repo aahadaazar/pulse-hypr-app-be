@@ -335,6 +335,13 @@ throws away — pure value-add, no architecture risk.
 **Entry criteria:** Phase 2 complete (the sync pipeline must exist to carry
 new streams end to end).
 
+**Implementation brief:** [`PHASE-5-DATA-DEPTH.md`](PHASE-5-DATA-DEPTH.md) is
+a self-contained handoff for whoever implements this phase — the exact
+registry mapping (including two fields the registry table doesn't ★-mark but
+this brief recommends including anyway), and a field-type caveat worth
+reading before writing any parsing code (the reference SDK apidoc's declared
+types don't fully match the actual bundled `.aar`).
+
 ### Tasks
 
 | # | Task | Source |
