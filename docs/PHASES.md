@@ -188,6 +188,12 @@ this backend exists.
 calorie/distance data into permanent storage; uploading before 1.1 lands has
 nothing to upload from.
 
+**Implementation brief:** [`PHASE-2-CLOUD-SYNC.md`](PHASE-2-CLOUD-SYNC.md) is
+a self-contained handoff for whoever implements this phase — exact API
+contracts, the client architecture already specified in
+`backend/docs/06-FLUTTER-INTEGRATION.md`, and a step-by-step checklist per
+task, including the battery/memory rules from `backend/docs/04-SYNC-PROTOCOL.md`.
+
 ### Tasks
 
 | # | Task | Source | Tier |
