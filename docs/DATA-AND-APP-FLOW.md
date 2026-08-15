@@ -669,6 +669,7 @@ add work so much as give that work somewhere to land.
 | I've been handed Phase 3 to implement, where do I start? | [`PHASE-3-IOS-PARITY.md`](PHASE-3-IOS-PARITY.md) |
 | I've been handed Phase 4 to implement, where do I start? | [`PHASE-4-RELIABILITY-AND-POLISH.md`](PHASE-4-RELIABILITY-AND-POLISH.md) |
 | I've been handed Phase 5 to implement, where do I start? | [`PHASE-5-DATA-DEPTH.md`](PHASE-5-DATA-DEPTH.md) |
+| I've been handed Phase 6 to implement, where do I start? | [`PHASE-6-WEB-DASHBOARD.md`](PHASE-6-WEB-DASHBOARD.md) |
 | Why is the storage shaped like this? | [`backend/docs/05-DECISIONS.md`](../backend/docs/05-DECISIONS.md) |
 | What exactly does an endpoint return? | [`backend/docs/03-API.md`](../backend/docs/03-API.md) |
 | What does the client have to build? | [`backend/docs/06-FLUTTER-INTEGRATION.md`](../backend/docs/06-FLUTTER-INTEGRATION.md) |

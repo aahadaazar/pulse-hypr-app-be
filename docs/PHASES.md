@@ -370,6 +370,15 @@ that already arrive in `OriginData3` on every history sync.
 building the dashboard against an unhardened sync pipeline means the
 dashboard becomes the first place users notice sync bugs.
 
+**Implementation brief:** [`PHASE-6-WEB-DASHBOARD.md`](PHASE-6-WEB-DASHBOARD.md)
+is a self-contained handoff for whoever implements this phase. Unlike
+Phases 1–5, there's no pre-existing fix document this draws from — the brief
+does the planning itself, grounded in the mobile app's actual current tile
+set (for a concrete parity target) and an infra signal already present in
+`backend/src/index.ts`'s CORS config that effectively pre-decided hosting
+(Cloudflare Pages) and dev tooling (Vite) before this phase was ever
+scoped.
+
 ### Tasks
 
 Not yet planned in detail. Starting point:
