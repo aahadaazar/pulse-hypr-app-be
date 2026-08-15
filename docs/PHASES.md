@@ -230,7 +230,7 @@ All of [Step 7.2](SETUP-AND-WIRING.md#72-full-pipeline-acceptance) in
 
 ## Phase 3 — iOS Parity
 
-**Status:** Not started
+**Status:** Deferred — requires iPhone testing
 **Goal:** Unblock iOS auth and bring the iOS bridge to the same standard as
 Android.
 **Entry criteria:** Phase 1 complete (3.4 depends on 1.4's persisted settings;
@@ -296,7 +296,7 @@ they remain accurate for the mechanics of the parts that are still in scope
 
 ## Phase 4 — Reliability & Polish
 
-**Status:** In progress
+**Status:** Done — implementation complete; physical-band testing pending
 **Goal:** Make the daily experience trustworthy under real-world network and
 BLE conditions — the gap between "works in the happy path" and "works on a
 commute."
@@ -329,7 +329,7 @@ scan-path code that affects how 4.2 should be built.
 
 ## Phase 5 — Data Depth
 
-**Status:** Not started
+**Status:** In progress
 **Goal:** Surface the metrics the band already sends but the app currently
 throws away — pure value-add, no architecture risk.
 **Entry criteria:** Phase 2 complete (the sync pipeline must exist to carry
