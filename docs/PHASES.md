@@ -238,6 +238,12 @@ Android.
 costs nothing — do it the moment anyone has ten minutes free, even before
 Phase 1.** It is a Firebase console change, not code.
 
+**Implementation brief:** [`PHASE-3-IOS-PARITY.md`](PHASE-3-IOS-PARITY.md) is
+a self-contained handoff for whoever implements this phase — verified
+current-code state per task (including the exact Firebase project/app-id
+discrepancy behind 3.1), the fix-12 scope override spelled out in full for
+3.5, and a step-by-step checklist per task.
+
 ### Tasks
 
 | # | Task | Source | Tier |

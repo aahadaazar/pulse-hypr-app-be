@@ -666,6 +666,7 @@ add work so much as give that work somewhere to land.
 | What should I build, in what order? | [`PHASES.md`](PHASES.md) |
 | I've been handed Phase 1 to implement, where do I start? | [`PHASE-1-CORE-ANDROID-RELIABILITY.md`](PHASE-1-CORE-ANDROID-RELIABILITY.md) |
 | I've been handed Phase 2 to implement, where do I start? | [`PHASE-2-CLOUD-SYNC.md`](PHASE-2-CLOUD-SYNC.md) |
+| I've been handed Phase 3 to implement, where do I start? | [`PHASE-3-IOS-PARITY.md`](PHASE-3-IOS-PARITY.md) |
 | Why is the storage shaped like this? | [`backend/docs/05-DECISIONS.md`](../backend/docs/05-DECISIONS.md) |
 | What exactly does an endpoint return? | [`backend/docs/03-API.md`](../backend/docs/03-API.md) |
 | What does the client have to build? | [`backend/docs/06-FLUTTER-INTEGRATION.md`](../backend/docs/06-FLUTTER-INTEGRATION.md) |
