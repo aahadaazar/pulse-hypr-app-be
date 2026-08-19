@@ -22,3 +22,9 @@ key.properties
 !.env.dev
 !.env.staging
 !.env.production
+
+# Local agent configuration, approvals, endpoints, and session logs.
+CLAUDE.local.md
+.claude/settings.local.json
+.mcp.json
+.codex-log/

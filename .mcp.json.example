@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "project-knowledge": {
+      "type": "http",
+      "url": "${PULSE_DOCS_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${PULSE_DOCS_MCP_TOKEN}"
+      }
+    },
+    "read-only-database": {
+      "type": "stdio",
+      "command": "${PULSE_DB_MCP_COMMAND}",
+      "args": [
+        "--mode",
+        "read-only"
+      ],
+      "env": {
+        "DATABASE_URL": "${PULSE_READONLY_DATABASE_URL}"
+      }
+    }
+  }
+}
