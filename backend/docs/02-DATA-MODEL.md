@@ -2,9 +2,9 @@
 
 Firestore layout, the packed frame format, and the metric registry.
 
-Everything is scoped under `users/{uid}`, where `uid` is the Firebase Auth
-subject from a verified ID token. There are no cross-user collections and no
-collection-group queries.
+Health records are scoped under `users/{uid}`, where `uid` is the Firebase Auth
+subject from a verified ID token. The separate `trainerInvites` collection holds
+only role and invitation metadata; it never contains health data.
 
 ---
 
@@ -19,6 +19,8 @@ users/{uid}                                  profile, goals, units, retention wa
 ├── nights/{YYYY-MM-DD}                       sleep session, keyed by wake date
 ├── events/{eventId}                          discrete, non-slotted records
 └── receipts/{batchId}                        ingest idempotency, Firestore TTL 7 days
+
+trainerInvites/{normalized-gmail}             pending/active trainer role and bound Firebase UID
 ```
 
 `days/{date}` is keyed by the **user's local calendar date**, not a UTC date
@@ -180,6 +182,12 @@ frontend has the information to say so.
   "units":       { "distance": "km", "temperature": "c" },
   "preferences": { "theme": "dark", "accent": "peach", "onboardingComplete": true },
 
+  // Team membership. Written only by the super-admin API.
+  "trainerEmail": "trainer@gmail.com | null",
+  "trainerUid": "firebase-subject | null",
+  "trainerAssignedAt": 1754697600000,
+  "trainerAssignedBy": "super-admin-firebase-subject",
+
   // Retention watermarks — how far the nightly sweep has already processed.
   "retentionRawThrough":    "2026-05-10",
   "retentionHourlyThrough": "2024-08-09",
@@ -191,6 +199,23 @@ frontend has the information to say so.
 into the band's own calorie, distance and body-composition maths, and the vendor
 guide is explicit that demo values produce wrong results. Today the Flutter
 onboarding collects all three and discards them, so the band runs on defaults.
+
+### `trainerInvites/{normalized-gmail}`
+
+```jsonc
+{
+  "email": "trainer@gmail.com",
+  "status": "pending | active",
+  "uid": "firebase-subject",       // present only after the first verified sign-in
+  "invitedAt": 1754697600000,
+  "invitedBy": "super-admin-firebase-subject",
+  "activatedAt": 1754697700000
+}
+```
+
+The pending record is intentionally keyed by a normalized Gmail address rather
+than a guessed UID. On the trainer's first verified sign-in, the Worker binds
+the invitation to that Firebase UID and activates all matching assignments.
 
 ### `users/{uid}/devices/{deviceId}`
 

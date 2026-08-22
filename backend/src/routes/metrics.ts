@@ -30,6 +30,7 @@ import { blockFromDocument, describeQuality, readSlot } from '../domain/blocks.j
 import { FirestoreClient } from '../firestore/client.js';
 import { dayPath, monthPath, streamBlockPath } from '../firestore/paths.js';
 import { fromFsFields, readBytes, readMap, readNumber } from '../firestore/value.js';
+import { readableUserId } from '../auth/team.js';
 
 export const metricRoutes = new Hono<AppContext>();
 
@@ -139,10 +140,10 @@ function hourlyFromDay(
  * tiers, so cost is predictable from the parameters alone.
  */
 metricRoutes.get('/series', async (c) => {
-  const uid = c.get('user').uid;
+  const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const specs = requireStreams(c.req.query('stream'));
   const { from, to, resolution } = parseRange(c);
-  const client = new FirestoreClient(c.env);
 
   if (resolution === 'raw') {
     const dates = enumerateDates(from, to);
@@ -275,14 +276,24 @@ metricRoutes.get('/series', async (c) => {
  * This is the single read behind a "day detail" dashboard view.
  */
 metricRoutes.get('/day/:date', async (c) => {
-  const uid = c.get('user').uid;
+  const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const date = c.req.param('date');
   if (!isDateKey(date)) throw ApiError.badRequest('`date` must be YYYY-MM-DD.');
 
-  const client = new FirestoreClient(c.env);
   const document = await client.getDocument(dayPath(uid, date));
   if (!document) {
-    return c.json({ date, exists: false, streams: {}, counters: null, sleep: null, scores: {} });
+    return c.json({
+      date,
+      exists: false,
+      tzOffsetMin: 0,
+      deviceIds: [],
+      streams: {},
+      counters: null,
+      sleep: null,
+      scores: {},
+      updatedAt: null,
+    });
   }
 
   const fields = fromFsFields(document.fields);
@@ -327,7 +338,8 @@ metricRoutes.get('/day/:date', async (c) => {
  * explicit that a stale value must never render as a live one.
  */
 metricRoutes.get('/latest', async (c) => {
-  const uid = c.get('user').uid;
+  const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const lookbackDays = Math.min(Number.parseInt(c.req.query('lookbackDays') ?? '7', 10) || 7, 30);
   const today = c.req.query('today') ?? localDateKey(Date.now(), 0);
   if (!isDateKey(today)) throw ApiError.badRequest('`today` must be YYYY-MM-DD.');
@@ -335,7 +347,6 @@ metricRoutes.get('/latest', async (c) => {
   const dates: string[] = [];
   for (let i = 0; i < lookbackDays; i++) dates.push(addDays(today, -i));
 
-  const client = new FirestoreClient(c.env);
   const documents = await client.batchGet(dates.map((date) => dayPath(uid, date)));
 
   const latest: Record<string, unknown> = {};

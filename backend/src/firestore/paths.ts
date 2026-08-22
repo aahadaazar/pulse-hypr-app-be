@@ -23,6 +23,15 @@ export function userPath(uid: string): string {
   return `users/${assertSafePathSegment(uid, 'uid')}`;
 }
 
+/**
+ * A trainer invitation is keyed by the normalized, verified Google email.
+ * This deliberately lets an administrator prepare a trainer before that
+ * person has a Firebase UID; the UID is bound only after their first sign-in.
+ */
+export function trainerPath(email: string): string {
+  return `trainerInvites/${assertSafePathSegment(email, 'trainerEmail')}`;
+}
+
 export function devicesCollection(uid: string): string {
   return `${userPath(uid)}/devices`;
 }

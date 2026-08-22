@@ -6,6 +6,7 @@ import { sleepFromDocument } from '../domain/sleep.js';
 import { FirestoreClient } from '../firestore/client.js';
 import { nightPath } from '../firestore/paths.js';
 import { fromFsFields } from '../firestore/value.js';
+import { readableUserId } from '../auth/team.js';
 
 export const sleepRoutes = new Hono<AppContext>();
 
@@ -19,7 +20,8 @@ const MAX_NIGHTS = 92;
  * measurement that is a session rather than a slotted sample.
  */
 sleepRoutes.get('/', async (c) => {
-  const uid = c.get('user').uid;
+  const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
 
   const to = c.req.query('to') ?? localDateKey(Date.now(), 0);
   if (!isDateKey(to)) throw ApiError.badRequest('`to` must be a YYYY-MM-DD date.');
@@ -33,7 +35,6 @@ sleepRoutes.get('/', async (c) => {
   }
 
   const includeSegments = c.req.query('segments') !== 'false';
-  const client = new FirestoreClient(c.env);
   const documents = await client.batchGet(dates.map((date) => nightPath(uid, date)));
 
   const nights = dates.flatMap((date) => {
@@ -48,11 +49,11 @@ sleepRoutes.get('/', async (c) => {
 });
 
 sleepRoutes.get('/:date', async (c) => {
-  const uid = c.get('user').uid;
+  const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const date = c.req.param('date');
   if (!isDateKey(date)) throw ApiError.badRequest('`date` must be YYYY-MM-DD.');
 
-  const client = new FirestoreClient(c.env);
   const document = await client.getDocument(nightPath(uid, date));
   if (!document) throw ApiError.notFound(`No sleep recorded for ${date}.`);
 

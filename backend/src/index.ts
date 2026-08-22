@@ -23,6 +23,7 @@ import { metricRoutes } from './routes/metrics.js';
 import { sleepRoutes } from './routes/sleep.js';
 import { configRoutes, profileRoutes } from './routes/profile.js';
 import { deviceRoutes } from './routes/devices.js';
+import { adminRoutes, meRoutes, teamRoutes } from './routes/team.js';
 import { runRetention } from './domain/retention.js';
 
 const app = new Hono<AppContext>();
@@ -83,6 +84,9 @@ app.route('/v1/sleep', sleepRoutes);
 app.route('/v1/profile', profileRoutes);
 app.route('/v1/config', configRoutes);
 app.route('/v1/devices', deviceRoutes);
+app.route('/v1/team', teamRoutes);
+app.route('/v1/me', meRoutes);
+app.route('/v1/admin', adminRoutes);
 
 app.notFound((c) =>
   c.json(ApiError.notFound(`No route for ${c.req.method} ${c.req.path}.`).toJSON(c.get('requestId')), 404),

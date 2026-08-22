@@ -22,6 +22,15 @@ npm install
 npm run dev
 ```
 
+Verify metric normalization, chart selection, TypeScript, and the production
+bundle with:
+
+```bash
+npm test
+npm run check
+npm run build
+```
+
 Vite serves on `http://localhost:5173`, which is already allow-listed by the
 Worker. By default the dashboard reads the production API. To point it at a
 local Worker, start Wrangler and use:

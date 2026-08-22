@@ -16,6 +16,43 @@ export interface ProfileResponse {
   updatedAt: number | null;
 }
 
+export type TeamRole = 'super_admin' | 'trainer' | 'user';
+
+export interface TeamMeResponse {
+  role: TeamRole;
+  trainerEmail: string | null;
+  assignedUserCount: number;
+}
+
+export interface TeamUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  trainerEmail: string | null;
+  trainerAssignedAt: number | null;
+  updatedAt: number | null;
+}
+
+export interface TeamUsersResponse {
+  users: TeamUser[];
+}
+
+export interface TrainerInvite {
+  email: string;
+  uid: string | null;
+  status: 'pending' | 'active';
+  invitedAt: number | null;
+  activatedAt: number | null;
+}
+
+export interface AdminUsersResponse {
+  users: TeamUser[];
+}
+
+export interface AdminTrainersResponse {
+  trainers: TrainerInvite[];
+}
+
 export interface LatestStream {
   unit: string;
   values: Record<string, number>;
@@ -65,6 +102,9 @@ export interface Device {
   batteryPercent?: number;
   lastIngestAt?: number;
   updatedAt?: number;
+  connectionState?: 'connected' | 'disconnected' | 'reconnecting';
+  connectionUpdatedAt?: number;
+  lastSeenAt?: number;
 }
 
 export interface DevicesResponse {
@@ -97,10 +137,13 @@ export interface AggregateValue {
 
 export interface SeriesDay {
   date: string;
+  tzOffsetMin?: number;
   startTs: number;
   slotSec: number;
   slots: number;
   values?: Record<string, Array<number | null>>;
+  sources?: Array<string | null>;
+  quality?: Array<string[] | null>;
   channels?: Record<string, AggregateValue[]>;
 }
 
@@ -112,6 +155,7 @@ export interface SeriesPoint {
 export interface MetricSeries {
   stream: string;
   unit: string;
+  aggregation?: 'avg' | 'sum' | 'last' | 'max' | 'mode';
   channels?: string[];
   days?: SeriesDay[];
   points?: SeriesPoint[];

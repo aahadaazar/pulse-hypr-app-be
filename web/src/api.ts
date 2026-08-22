@@ -3,12 +3,16 @@ import { getAuth } from 'firebase/auth';
 
 import type {
   ApiFailure,
+  AdminTrainersResponse,
+  AdminUsersResponse,
   DevicesResponse,
   LatestMetricsResponse,
   MetricDayResponse,
   MetricSeriesResponse,
   ProfileResponse,
   SleepResponse,
+  TeamMeResponse,
+  TeamUsersResponse,
   TrendResolution,
 } from './types';
 
@@ -67,7 +71,12 @@ function asFailure(value: unknown, fallback: string): ApiFailure {
 }
 
 /** The one API boundary for all dashboard reads. Never call fetch from a component. */
-async function request<T>(path: string, refreshed = false): Promise<T> {
+interface RequestOptions {
+  method?: 'DELETE' | 'GET' | 'POST' | 'PUT';
+  body?: unknown;
+}
+
+async function request<T>(path: string, options: RequestOptions = {}, refreshed = false): Promise<T> {
   const user = auth.currentUser;
   if (!user) {
     throw new ApiError({ code: 'unauthenticated', message: 'Sign in to view your health data.', retryable: false });
@@ -75,24 +84,43 @@ async function request<T>(path: string, refreshed = false): Promise<T> {
 
   const token = await user.getIdToken(refreshed);
   const response = await fetch(`${baseUrl}${path}`, {
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    method: options.method,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const payload = await readJson(response);
   if (response.ok) return payload as T;
 
   const failure = asFailure(payload, `http_${response.status}`);
-  if (failure.code === 'token_expired' && !refreshed) return request<T>(path, true);
+  if (failure.code === 'token_expired' && !refreshed) return request<T>(path, options, true);
   throw new ApiError(failure);
 }
 
+function scoped(path: string, userId?: string): string {
+  if (!userId) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}userId=${encodeURIComponent(userId)}`;
+}
+
 export const dashboardApi = {
-  profile: () => request<ProfileResponse>('/profile'),
-  latest: () => request<LatestMetricsResponse>('/metrics/latest?lookbackDays=7'),
-  day: (date: string) => request<MetricDayResponse>(`/metrics/day/${date}`),
-  sleep: () => request<SleepResponse>('/sleep?segments=true'),
-  devices: () => request<DevicesResponse>('/devices'),
-  series: (streams: string[], from: string, to: string, resolution: TrendResolution) => {
+  profile: (userId?: string) => request<ProfileResponse>(scoped('/profile', userId)),
+  latest: (userId?: string) => request<LatestMetricsResponse>(scoped('/metrics/latest?lookbackDays=7', userId)),
+  day: (date: string, userId?: string) => request<MetricDayResponse>(scoped(`/metrics/day/${date}`, userId)),
+  sleep: (userId?: string) => request<SleepResponse>(scoped('/sleep?segments=true', userId)),
+  devices: (userId?: string) => request<DevicesResponse>(scoped('/devices', userId)),
+  series: (streams: string[], from: string, to: string, resolution: TrendResolution, userId?: string) => {
     const query = new URLSearchParams({ stream: streams.join(','), from, to, resolution });
-    return request<MetricSeriesResponse>(`/metrics/series?${query}`);
+    return request<MetricSeriesResponse>(scoped(`/metrics/series?${query}`, userId));
   },
+  teamMe: () => request<TeamMeResponse>('/me/teams'),
+  teamUsers: () => request<TeamUsersResponse>('/team/users'),
+  adminUsers: () => request<AdminUsersResponse>('/admin/users'),
+  adminTrainers: () => request<AdminTrainersResponse>('/admin/trainers'),
+  inviteTrainer: (email: string) => request<{ ok: true; email: string; status: 'pending' | 'active' }>('/admin/trainers', { method: 'PUT', body: { email } }),
+  assignTrainer: (uid: string, email: string) => request<{ ok: true }>(`/admin/users/${encodeURIComponent(uid)}/trainer`, { method: 'PUT', body: { email } }),
+  detachTrainer: (uid: string) => request<{ ok: true }>(`/admin/users/${encodeURIComponent(uid)}/trainer`, { method: 'DELETE' }),
 };

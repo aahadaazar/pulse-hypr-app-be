@@ -19,7 +19,9 @@ final token = await FirebaseAuth.instance.currentUser?.getIdToken();
 
 It is verified in-process against Google's published signing keys (`aud`, `iss`,
 `exp`, `iat`, `sub`, 60 s clock skew). **`uid` is taken only from the verified
-token** — no endpoint accepts a user id in a path, query or body.
+token.** Write endpoints always act on that UID. Read endpoints act on it by
+default; the team-scoped reads described below additionally accept `userId`
+only after server-side trainer-assignment authorization.
 
 Firebase ID tokens last one hour. `getIdToken()` refreshes automatically when
 near expiry; long backfills should re-read it between batches.
@@ -460,6 +462,8 @@ Changing sync cadence here retunes every client without an app-store release.
 ```jsonc
 { "devices": [ { "id": "AA:BB:CC:DD:EE:FF", "name": "KR96 PRO",
                  "watchDataDay": 3, "batteryPercent": 72,
+                 "connectionState": "connected",
+                 "lastSeenAt": 1754697900000,
                  "watermarks": { "hr": 1754697900000 }, … } ] }
 ```
 
@@ -475,16 +479,89 @@ device number, firmware and capability packages.
   "protocolVersion": 5,       // originProtocolVersion — 3/5 select IOriginData3Listener
   "watchDataDay": 3,          // days of history the band retains
   "batteryPercent": 72, "charging": false, "active": true,
+  "connectionState": "connected",
   "capabilities": { "isSupportSpo2h": true, "isSupportHRV": true, … }
 }
 ```
 
 `capabilities` is stored verbatim — the surface is the band's, not ours.
 
+`connectionState` is supplied by the signed-in mobile app after a confirmed
+Bluetooth transition. `connected` calls also refresh server-authored
+`lastSeenAt`; clients should treat it as disconnected when that heartbeat is
+stale rather than inferring a live Bluetooth link from old health data.
+
 ### `DELETE /v1/devices/:deviceId`
 
 Unpairs the band. **Measurements are kept** (ADR-015): they are the user's health
 history, not the device's. Response includes `"dataRetained": true`.
+
+---
+
+## Fitness trainer access and administration
+
+Health data remains private by default. A fitness trainer may read the complete
+dashboard data — profile, devices, latest values, day detail, trends and sleep
+— only for a user who is currently assigned to that trainer. The browser never
+receives Firestore credentials or uses the assignment as a UI-only check.
+
+### Team-scoped reads
+
+The following existing **GET** endpoints accept an optional
+`userId={firebase-uid}` query parameter:
+
+- `/profile`
+- `/devices`
+- `/metrics/latest`, `/metrics/day/:date`, `/metrics/series`
+- `/sleep`, `/sleep/:date`
+
+Without `userId`, each endpoint reads the caller's own account. With it, the
+super administrator may read any registered user. An active trainer may only
+read a target whose current `trainerEmail` exactly matches the verified email
+bound to that trainer's invitation; otherwise it returns `403 forbidden`. A
+trainer or super administrator cannot write, export, assign, or detach another
+user's health data through these routes.
+
+### `GET /v1/me/teams`
+
+Returns the signed-in account's team role:
+
+```jsonc
+{ "role": "trainer", "trainerEmail": "trainer@gmail.com", "assignedUserCount": 4 }
+```
+
+Roles are `user`, `trainer`, and `super_admin`. When an invited trainer signs
+in using the exact, verified Gmail address, their pending invitation becomes
+active and is bound to their Firebase UID.
+
+`GET /v1/team/me` remains a compatibility alias for older clients. Both paths
+return the same response.
+
+### `GET /v1/team/users`
+
+Available only to an active trainer. Returns the assigned user roster (UID,
+email, display name and assignment metadata); use the scoped reads above for a
+selected member's metrics.
+
+### Super-admin routes
+
+Only the verified `xanxenny@gmail.com` Firebase account may call these routes:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/admin/users` | List registered app users and their current assignment |
+| `GET /v1/admin/trainers` | List pending and active trainer invitations |
+| `PUT /v1/admin/trainers` | Create or retain an invitation; body `{ "email": "trainer@gmail.com" }` |
+| `PUT /v1/admin/users/:uid/trainer` | Assign or reassign one registered user; body `{ "email": "trainer@gmail.com" }` |
+| `DELETE /v1/admin/users/:uid/trainer` | Detach the user's current trainer |
+
+An assignment always replaces the previous trainer. Assigning a Gmail address
+that has not signed in creates a pending invitation. Detaching immediately
+removes trainer access while preserving the user and their health history.
+The user list is populated by registered app accounts: the Worker materializes
+the root account record on the user's first authenticated dashboard/team
+request, profile update, device update, or metric-sync write, rather than
+relying on Firestore to infer a parent document from health subcollections.
 
 ---
 

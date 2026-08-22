@@ -5,6 +5,7 @@ import { ingestBatch, parseBatch } from '../domain/ingest.js';
 import { STREAMS, SOURCE_NAMES, QUALITY } from '../domain/registry.js';
 import { SLOTS_PER_DAY, SLOT_SECONDS } from '../lib/time.js';
 import { ApiError } from '../lib/errors.js';
+import { ensureUserRecord } from '../auth/registration.js';
 
 export const ingestRoutes = new Hono<AppContext>();
 
@@ -25,7 +26,9 @@ ingestRoutes.post('/', async (c) => {
 
   const batch = parseBatch(body, c.env);
   const client = new FirestoreClient(c.env);
-  const result = await ingestBatch(client, c.get('user').uid, batch);
+  const user = c.get('user');
+  await ensureUserRecord(client, user);
+  const result = await ingestBatch(client, user.uid, batch);
 
   return c.json(result, result.duplicate ? 200 : 201);
 });

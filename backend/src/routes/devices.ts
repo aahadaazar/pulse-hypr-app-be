@@ -5,6 +5,8 @@ import { asDeviceId, asObject, optInt, optString, optBool } from '../lib/validat
 import { FirestoreClient } from '../firestore/client.js';
 import { devicePath } from '../firestore/paths.js';
 import { fromFsFields, readMap, toFsFields } from '../firestore/value.js';
+import { readableUserId } from '../auth/team.js';
+import { ensureUserRecord } from '../auth/registration.js';
 
 export const deviceRoutes = new Hono<AppContext>();
 
@@ -21,8 +23,8 @@ export const deviceRoutes = new Hono<AppContext>();
  * engine how far back a re-read can possibly reach.
  */
 deviceRoutes.get('/', async (c) => {
-  const uid = c.get('user').uid;
   const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const documents = await client.runQuery(`users/${uid}`, {
     from: [{ collectionId: 'devices' }],
     limit: 50,
@@ -45,7 +47,8 @@ deviceRoutes.get('/', async (c) => {
  * capability packages.
  */
 deviceRoutes.put('/:deviceId', async (c) => {
-  const uid = c.get('user').uid;
+  const user = c.get('user');
+  const uid = user.uid;
   const deviceId = asDeviceId(c.req.param('deviceId'));
 
   let body: unknown;
@@ -80,6 +83,26 @@ deviceRoutes.put('/:deviceId', async (c) => {
     updateMask.push(key);
   }
 
+  if (root['connectionState'] !== undefined) {
+    const connectionState = optString(root['connectionState'], 'connectionState', 20);
+    if (
+      connectionState !== 'connected' &&
+      connectionState !== 'disconnected' &&
+      connectionState !== 'reconnecting'
+    ) {
+      throw ApiError.badRequest('`connectionState` must be connected, disconnected, or reconnecting.');
+    }
+
+    const now = Date.now();
+    fields['connectionState'] = connectionState;
+    fields['connectionUpdatedAt'] = now;
+    updateMask.push('connectionState', 'connectionUpdatedAt');
+    if (connectionState === 'connected') {
+      fields['lastSeenAt'] = now;
+      updateMask.push('lastSeenAt');
+    }
+  }
+
   if (root['capabilities'] !== undefined) {
     const capabilities = asObject(root['capabilities'], 'capabilities');
     // Stored verbatim: the capability surface is the band's, not ours, and
@@ -90,6 +113,7 @@ deviceRoutes.put('/:deviceId', async (c) => {
   }
 
   const client = new FirestoreClient(c.env);
+  await ensureUserRecord(client, user);
   await client.commit([
     { kind: 'update', path: devicePath(uid, deviceId), fields: toFsFields(fields as never), updateMask },
   ]);
@@ -98,9 +122,9 @@ deviceRoutes.put('/:deviceId', async (c) => {
 });
 
 deviceRoutes.get('/:deviceId', async (c) => {
-  const uid = c.get('user').uid;
   const deviceId = asDeviceId(c.req.param('deviceId'));
   const client = new FirestoreClient(c.env);
+  const uid = await readableUserId(client, c.get('user'), c.req.query('userId'));
   const document = await client.getDocument(devicePath(uid, deviceId));
   if (!document) throw ApiError.notFound(`No device ${deviceId} for this user.`);
 

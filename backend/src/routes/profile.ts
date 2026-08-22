@@ -12,6 +12,7 @@ import {
 import { FirestoreClient } from '../firestore/client.js';
 import { userPath } from '../firestore/paths.js';
 import { fromFsFields, readMap, readNumber, readString, toFsFields } from '../firestore/value.js';
+import { readableUserId } from '../auth/team.js';
 
 export const profileRoutes = new Hono<AppContext>();
 export const configRoutes = new Hono<AppContext>();
@@ -97,15 +98,16 @@ function ageFromBirthDate(birthDate: string | undefined): number | null {
 profileRoutes.get('/', async (c) => {
   const user = c.get('user');
   const client = new FirestoreClient(c.env);
-  const document = await client.getDocument(userPath(user.uid));
+  const uid = await readableUserId(client, user, c.req.query('userId'));
+  const document = await client.getDocument(userPath(uid));
   const fields = document ? fromFsFields(document.fields) : {};
 
   const profile = readMap(fields, 'profile') ?? {};
   const goals = { ...DEFAULT_GOALS, ...(readMap(fields, 'goals') ?? {}) };
 
   return c.json({
-    uid: user.uid,
-    email: readString(fields, 'email') ?? user.email,
+    uid,
+    email: readString(fields, 'email') ?? (uid === user.uid ? user.email : null),
     exists: document !== null,
     profile: {
       ...profile,
