@@ -32,7 +32,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'https://pulse-hypr-api.aahadaazar.workers.dev/v1')
+// VITE_API_BASE_URL is normally set per-mode by .env.development / .env.production
+// (see backend/wrangler.toml [env.production] for the URL these must match). This
+// fallback only applies if that resolution somehow didn't happen, so it points at
+// the same Worker the production build targets, not a local/dev one.
+const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'https://pulse-hypr-api-production.aahadaazar.workers.dev/v1')
   .replace(/\/$/, '');
 
 export class ApiError extends Error {
